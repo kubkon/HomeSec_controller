@@ -9,7 +9,7 @@ byte mac[] = {
 EthernetClient client;
 
 EthernetUDP udp;
-IPAddress remote(192,168,0,12); // address of the server
+IPAddress remote(192,168,0,253); // address of the server
 unsigned int local_port = 8888;
 char output_buffer[UDP_TX_PACKET_MAX_SIZE];
 
@@ -17,6 +17,10 @@ char output_buffer[UDP_TX_PACKET_MAX_SIZE];
 int pir_pin = 2;
 int pir_state = LOW;
 int pir_value = 0;
+
+// Reed switch vars
+int reed_pin = A0;
+int reed_value = 0;
 
 void setup() {
   // wait for serial; for debugging only
@@ -56,6 +60,12 @@ void loop() {
       Serial.println("Motion ended!");
       pir_state = LOW;
     }
+  }
+
+  reed_value = analogRead(reed_pin);
+  if (reed_value == 0) {
+    Serial.println("Door was open!");
+    publish_trigger();
   }
 }
 
