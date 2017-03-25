@@ -14,6 +14,8 @@ WiFiUDP udp;
 // Reed switch
 int reed_pin = A3;
 int reed_value = 0;
+unsigned long last_reed_check_time = 0;
+const unsigned long reed_interval = 60L * 1000L; // wait n seconds before triggering on reed switch if open
 
 // PIR
 int pir_pin = 2;
@@ -21,11 +23,14 @@ int pir_state = LOW;
 int pir_value = 0;
 
 // packet vars
-#define UPDATE_P     0x1
-#define TRIGGER_P    0x2
 #define REED         0x1
-#define PIR_DETECTED 0x2
-#define PIR_ENDED    0x4
+#define PIR          0x2
+
+#define REED_OPEN    0x1
+#define REED_CLOSED  0x2
+
+#define PIR_DETECTED 0x1
+#define PIR_ENDED    0x2
 
 #define PACKET_LENGTH 2
 byte packet_buffer[PACKET_LENGTH];
@@ -61,24 +66,31 @@ void setup() {
 }
 
 void loop() {
-  reed_value = analogRead(reed_pin);
-  if (reed_value <= 10) {
-    Serial.println("Door was open!");
-    publish((uint8_t)TRIGGER_P, (uint8_t)REED);
+  if (millis() - last_reed_check_time > reed_interval) {
+    reed_value = analogRead(reed_pin);
+    if (reed_value <= 10) {
+      Serial.println("Door was open!");
+      publish((uint8_t)REED, (uint8_t)REED_OPEN);
+    }
+    else {
+      Serial.println("Door was closed!");
+      publish((uint8_t)REED, (uint8_t)REED_CLOSED);
+    }
+    last_reed_check_time = millis();
   }
 
   pir_value = digitalRead(pir_pin);
   if (pir_value == HIGH) {
     if (pir_state == LOW) {
       Serial.println("Motion detected!");
-      publish((uint8_t)TRIGGER_P, (uint8_t)PIR_DETECTED);
+      publish((uint8_t)PIR, (uint8_t)PIR_DETECTED);
       pir_state = HIGH;
     }
   }
   else {
     if (pir_state == HIGH) {
       Serial.println("Motion ended!");
-      publish((uint8_t)TRIGGER_P, (uint8_t)PIR_ENDED);
+      publish((uint8_t)PIR, (uint8_t)PIR_ENDED);
       pir_state = LOW;
     }
   }
