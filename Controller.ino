@@ -1,4 +1,4 @@
-#include <SPI.h>
+/* #include <SPI.h> */
 #include <WiFi101.h>
 #include <WiFiUdp.h>
 #include "credentials.h"
@@ -16,38 +16,43 @@ byte packet_buffer[PACKET_LENGTH];
 unsigned long last_connection_time = 0;
 const unsigned long interval = 60L * 1000L; // delay update of 60seconds
 
+int reed_pin = A3;
+int reed_value = 0;
+
 void setup() {
   // wait for serial; for debugging only
   Serial.begin(9600);
   while(!Serial) {
     ; // wait for serial for connect
   }
-
 }
 
 void loop() {
   if (millis() - last_connection_time > interval) {
     last_connection_time = send_update();
   }
+
+  reed_value = analogRead(reed_pin);
+  Serial.println(reed_value);
 }
 
 unsigned long send_update() {
   // attempt to connect to WiFi network
   while (wifi_status != WL_CONNECTED) {
-    Serial.print("Attempting to connect to ");
-    Serial.println(ssid);
+    /* Serial.print("Attempting to connect to "); */
+    /* Serial.println(ssid); */
     wifi_status = WiFi.begin(ssid, pass);
 
     // wait 1 second for connection:
     delay(1000);
   }
 
-  Serial.print("Connected to ");
-  Serial.print(WiFi.SSID());
-  Serial.print(" with IP address ");
-  Serial.println(WiFi.localIP());
+  /* Serial.print("Connected to "); */
+  /* Serial.print(WiFi.SSID()); */
+  /* Serial.print(" with IP address "); */
+  /* Serial.println(WiFi.localIP()); */
 
-  Serial.println("Sending packet...");
+  /* Serial.println("Sending packet..."); */
 
   memset(packet_buffer, 0, PACKET_LENGTH);
   packet_buffer[0] = 'U';
