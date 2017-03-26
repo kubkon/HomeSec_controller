@@ -13,9 +13,8 @@ WiFiUDP udp;
 
 // Reed switch
 int reed_pin = A3;
+int reed_state = LOW;
 int reed_value = 0;
-unsigned long last_reed_check_time = 0;
-const unsigned long reed_interval = 60L * 1000L; // wait n seconds before triggering on reed switch if open
 
 // PIR
 int pir_pin = 2;
@@ -39,9 +38,9 @@ byte packet_buffer[PACKET_LENGTH];
 void setup() {
   // wait for serial; for debugging only
   Serial.begin(9600);
-  while(!Serial) {
-    ; // wait for serial for connect
-  }
+  /* while(!Serial) { */
+  /*   ; // wait for serial for connect */
+  /* } */
 
   // attempt to connect to WiFi network
   while (wifi_status != WL_CONNECTED) {
@@ -66,17 +65,20 @@ void setup() {
 }
 
 void loop() {
-  if (millis() - last_reed_check_time > reed_interval) {
-    reed_value = analogRead(reed_pin);
-    if (reed_value <= 10) {
+  reed_value = analogRead(reed_pin);
+  if (reed_value <= 10) {
+    if (reed_state == LOW) {
       Serial.println("Door was open!");
       publish((uint8_t)REED, (uint8_t)REED_OPEN);
+      reed_state = HIGH;
     }
-    else {
+  }
+  else {
+    if (reed_state == HIGH) {
       Serial.println("Door was closed!");
       publish((uint8_t)REED, (uint8_t)REED_CLOSED);
+      reed_state = LOW;
     }
-    last_reed_check_time = millis();
   }
 
   pir_value = digitalRead(pir_pin);
